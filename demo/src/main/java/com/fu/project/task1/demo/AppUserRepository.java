@@ -3,7 +3,9 @@ package com.fu.project.task1.demo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
-public interface TourRepository extends JpaRepository<Tour, Long> {
-    Tour findById(Integer id);
+public interface AppUserRepository extends JpaRepository<AppUser, Long> {
+    Optional<AppUser> findByUsername(String username);
 }

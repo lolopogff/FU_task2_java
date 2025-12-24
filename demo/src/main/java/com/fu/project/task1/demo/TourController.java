@@ -1,6 +1,8 @@
 package com.fu.project.task1.demo;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -14,15 +16,25 @@ public class TourController {
     @Autowired
     private TourService tourService;
 
-    // Главная страница - список всех туров
     @GetMapping("/")
-    public String getAllTours(Model model) {
+    public String getAllTours(Model model, Authentication auth) { // auth для проверки
         List<Tour> tours = tourService.getAllTours();
         model.addAttribute("tours", tours);
-        return "index"; // index.html в templates
+        model.addAttribute("isAdmin", auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")));
+        return "index";
+    }
+
+    @GetMapping("/{id}")
+    public String getTourById(@PathVariable int id, Model model) {
+        // доступно всем авторизованным
+        Tour tour = tourService.getTourById(id);
+        model.addAttribute("tour", tour);
+        return "view";
     }
 
     // Страница создания тура
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/new")
     public String showCreateForm(Model model) {
         model.addAttribute("tour", new Tour());
@@ -30,21 +42,16 @@ public class TourController {
     }
 
     // Создание тура
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/")
     public String createTour(@ModelAttribute Tour tour) {
         tourService.createTour(tour);
         return "redirect:/tours/";
     }
 
-    // Просмотр одного тура
-    @GetMapping("/{id}")
-    public String getTourById(@PathVariable int id, Model model) {
-        Tour tour = tourService.getTourById(id);
-        model.addAttribute("tour", tour);
-        return "view"; // view.html в templates
-    }
 
     // Страница редактирования тура
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}/edit")
     public String showEditForm(@PathVariable int id, Model model) {
         Tour tour = tourService.getTourById(id);
@@ -53,6 +60,7 @@ public class TourController {
     }
 
     // Обновление тура
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}")
     public String updateTour(@PathVariable int id, @ModelAttribute Tour tour) {
         tourService.updateTour(id, tour);
@@ -60,6 +68,7 @@ public class TourController {
     }
 
     // Удаление тура
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/delete")
     public String deleteTour(@PathVariable int id) {
         tourService.deleteTour(id);
