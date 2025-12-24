@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title>Система управления турами</title>
@@ -10,9 +11,25 @@
 </head>
 <body>
 <div class="container">
-    <div class="main-header fade-in">
-        <h1><i class="fas fa-globe-americas me-3"></i>Система управления турами</h1>
-        <p class="lead">Эффективное управление вашими турами</p>
+    <!-- Шапка с приветствием и logout/login -->
+    <div class="d-flex justify-content-between align-items-center my-4">
+        <div class="main-header fade-in">
+            <h1><i class="fas fa-globe-americas me-3"></i>Система управления турами</h1>
+            <p class="lead">Эффективное управление вашими турами</p>
+        </div>
+
+        <div class="text-end">
+            <div sec:authorize="isAuthenticated()">
+                <span class="me-3">Привет, <strong sec:authentication="name"></strong>!</span>
+                <a th:href="@{/logout}" class="btn btn-outline-danger">
+                    <i class="fas fa-sign-out-alt me-2"></i>Выйти
+                </a>
+            </div>
+            <div sec:authorize="isAnonymous()">
+                <a th:href="@{/login}" class="btn btn-outline-primary me-2">Войти</a>
+                <a th:href="@{/register}" class="btn btn-primary">Регистрация</a>
+            </div>
+        </div>
     </div>
 
     <div class="content-section">
@@ -22,9 +39,9 @@
                 <span class="stat-label">Всего туров</span>
             </div>
             <div class="stat-card">
-                    <span class="stat-number">
-                        $<span th:text="${tours != null and not #lists.isEmpty(tours) ? #aggregates.sum(tours.![price]) : 0}">0</span>
-                    </span>
+                <span class="stat-number">
+                    $<span th:text="${tours != null and not #lists.isEmpty(tours) ? #aggregates.sum(tours.![price]) : 0}">0</span>
+                </span>
                 <span class="stat-label">Общая стоимость</span>
             </div>
         </div>
@@ -32,7 +49,10 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-list me-2"></i>Все туры</h5>
-                <a th:href="@{/tours/new}" class="btn btn-primary">
+                <!-- Кнопка "Добавить" только для ADMIN -->
+                <a th:href="@{/tours/new}"
+                   class="btn btn-primary"
+                   sec:authorize="hasRole('ADMIN')">
                     <i class="fas fa-plus me-2"></i>Добавить новый тур
                 </a>
             </div>
@@ -60,14 +80,17 @@
                                        class="btn btn-info btn-sm">
                                         <i class="fas fa-eye me-1"></i>Просмотр
                                     </a>
+                                    <!-- Редактировать и Удалить — только ADMIN -->
                                     <a th:href="@{/tours/{id}/edit(id=${tour.id})}"
-                                       class="btn btn-warning btn-sm">
+                                       class="btn btn-warning btn-sm"
+                                       sec:authorize="hasRole('ADMIN')">
                                         <i class="fas fa-edit me-1"></i>Редактировать
                                     </a>
                                     <form th:action="@{/tours/{id}/delete(id=${tour.id})}"
                                           method="post"
                                           style="display: inline;"
-                                          onsubmit="return confirm('Вы уверены, что хотите удалить этот тур?')">
+                                          onsubmit="return confirm('Вы уверены, что хотите удалить этот тур?')"
+                                          sec:authorize="hasRole('ADMIN')">
                                         <button type="submit" class="btn btn-danger btn-sm">
                                             <i class="fas fa-trash me-1"></i>Удалить
                                         </button>
@@ -79,13 +102,18 @@
                     </div>
                 </div>
 
-                <div th:if="${tours == null or #lists.isEmpty(tours)}" class="empty-state">
-                    <i class="fas fa-inbox"></i>
+                <div th:if="${tours == null or #lists.isEmpty(tours)}" class="empty-state text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                     <h3>Туры не найдены</h3>
-                    <p class="mb-4">В системе пока нет туров. Создайте первый тур!</p>
-                    <a th:href="@{/tours/new}" class="btn btn-primary btn-lg">
+                    <p class="mb-4">В системе пока нет туров.</p>
+                    <a th:href="@{/tours/new}"
+                       class="btn btn-primary btn-lg"
+                       sec:authorize="hasRole('ADMIN')">
                         <i class="fas fa-plus me-2"></i>Создать первый тур
                     </a>
+                    <p sec:authorize="hasRole('USER')" class="text-muted mt-3">
+                        Только администратор может добавлять туры.
+                    </p>
                 </div>
             </div>
         </div>
